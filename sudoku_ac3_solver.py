@@ -1,8 +1,10 @@
-############################################################
-# CIS 521: Homework 4
-############################################################
 
-student_name = "Yuxuan Hong"
+'''
+Sudoku Solver using Improved AC-3 Algorithm + MRV Heuristic
+
+Created by Yuxuan Andy Hong
+Oct 2020
+'''
 
 ############################################################
 # Imports
@@ -15,7 +17,7 @@ import heapq
 
 
 ############################################################
-# Section 1: Sudoku Solver
+# Sudoku Solver - AC 3 + MRV Heuristic
 ############################################################
 
 def sudoku_cells():
@@ -237,174 +239,3 @@ class Sudoku(object):
         self.infer_improved()
         self.board = self.backtrack_search()
 
-############################################################
-# Section 2: Dominoes Games
-############################################################
-
-def create_dominoes_game(rows, cols):
-    bd=[ [False for j in range(cols)] for i in range(rows)]
-    return DominoesGame(bd)
-
-
-class DominoesGame(object):
-
-    def __init__(self, board):
-        self.board = board
-        self.row = len(board)
-        self.col = len(board[0])
-
-    def get_board(self):
-        return self.board
-
-    def reset(self):
-        for i in range(self.row):
-            for j in range(self.col):
-                if self.board[i][j] != False:
-                    self.board[i][j] = False
-
-    def is_legal_move(self, row, col, vertical):
-        cover_range = [(row, col)]
-        if vertical:
-            cover_range.append((row+1, col))
-        else:
-            cover_range.append((row, col+1))
-        assert(len(cover_range) == 2)
-
-        for tile in cover_range:
-            if tile[0] >= self.row or tile[0] < 0 or tile[1] >= self.col or tile[1] < 0:
-                return False
-            elif self.board[tile[0]][tile[1]] == True:
-                return False
-        return True
- 
-    def legal_moves(self, vertical):
-        '''return a list of tuples that contains all legal moves for cur player | a move is a tuple (i, j)'''
-        all_legal_moves = []
-
-        for row in range(self.row):
-            for col in range(self.col):
-                if self.is_legal_move(row, col, vertical):
-                    all_legal_moves.append((row,col))
-
-        return all_legal_moves
-
-    def perform_move(self, row, col, vertical):
-        if self.is_legal_move(row, col, vertical):
-            self.board[row][col] = True
-
-            if vertical:
-                self.board[row + 1][col] = True
-            else:
-                self.board[row][col + 1] = True
-
-    def game_over(self, vertical):
-        if len(self.legal_moves(vertical)) == 0:
-            return True
-        return False
-
-    def copy(self):
-        new_dmGame = copy.deepcopy(self)
-        return new_dmGame
-
-    def successors(self, vertical):
-        '''return a lst of all successors
-        a successor is a tuple (move, new_game after perfoming the move)
-        '''
-
-        all_successors = []
-        legal_moves = self.legal_moves(vertical)
-
-        for move in legal_moves:
-            new_Dominoes = self.copy()
-            new_Dominoes.perform_move(move[0], move[1], vertical)
-            all_successors.append((move, new_Dominoes))
-        
-        return all_successors
-
-    def get_random_move(self, vertical):
-        pass
-
-    def get_value(self, vertical):
-        '''calculate the value at the leave node
-        assume the game state passdown here has already been changed'''
-        
-        value = len(self.legal_moves(vertical)) - len(self.legal_moves(not vertical))
-        return value
-    
-    def max_value(self, alpha, beta, limit, cur_depth, vertical, move, leaves_visited):
-        '''return value, move'''
-        if cur_depth == limit:
-            leaves_visited += 1
-            # print((self.get_value(vertical), move, leaves_visited))
-            return (self.get_value(vertical), move, leaves_visited)
-        
-        v = float('-inf')
-        for successor in self.successors(vertical):
-            cur_depth += 1
-            if cur_depth == 1:
-                move = successor[0]
-            suc_game = successor[1]
-
-            v2, move2, leaves_visited = suc_game.min_value(alpha, beta, limit, cur_depth, not vertical, move, leaves_visited)
-
-            if v2 > v:
-                v, best_move = v2, move2
-                alpha = max(alpha, v)
-            
-            if v >= beta:
-                return (v, move, leaves_visited)
-            
-            cur_depth -= 1
-
-        return (v, best_move, leaves_visited)
-
-    def min_value(self, alpha, beta, limit, cur_depth, vertical, move, leaves_visited):
-        '''return value, move'''
-        if cur_depth == limit:
-            leaves_visited += 1
-            # print((self.get_value(vertical), move, leaves_visited))
-            return (self.get_value(not vertical), move, leaves_visited)
-        
-        v = float('inf')
-        for successor in self.successors(vertical):
-            cur_depth += 1
-            if cur_depth == 1:
-                move = successor[0]
-            suc_game = successor[1]
-
-            v2, move2, leaves_visited = suc_game.max_value(alpha, beta, limit, cur_depth, not vertical, move, leaves_visited)
-
-            if v2 < v:
-                v, best_move = v2, move2
-                beta = min(beta, v)
-            
-            if v <= alpha:
-                return (v, move, leaves_visited)
-            
-            cur_depth -= 1
-
-        return (v, best_move, leaves_visited)
-        
-    def get_best_move(self, vertical, limit):
-        '''return 3 elem-tuple  ( best_move as(row, col),  its associated_val, num of leave nodes visied during the search  )
-        board_val = num_moves_possible for current player - num_moves_possible for opponent
-        implemented as alpha-beta search
-        '''
-        val, best_move, leaves_visited = self.max_value(float('-inf'), float('inf'), limit, 0, vertical, None, 0)
-        
-        return (best_move, val, leaves_visited)
-        
-############################################################
-# Section 3: Feedback
-############################################################
-
-# Just an approximation is fine.
-feedback_question_1 = 20
-
-feedback_question_2 = """
-xxx
-"""
-
-feedback_question_3 = """
-xxx
-"""
